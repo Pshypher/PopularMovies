@@ -16,5 +16,5 @@
 
     <string name="detail_activity">Movie Detail</string>
 
-    <string name="api_key">4815e621a737b09be00a36f1152532e8</string>
+    <string name="api_key"></string>
 </resources>
