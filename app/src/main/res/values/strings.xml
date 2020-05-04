@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">Popular Movies</string>
+
+    <string name="error_message">Failed to get movie posters, please try again.</string>
+
+    <string name="error_network_connection">Check your network connection.</string>
+
+    <string name="label_favorite_button">Mark as favorite</string>
+
+    <string name="placeholder_overview_text">Every child comes into the world full of promise and none more so than Chappie:
+        he is gifted, special, a prodigy. Chappie he is a robot.</string>
+
+    <string name="sort_by_popular_movies">Popularity</string>
+
+    <string name="sort_by_ratings">Ratings</string>
+
+    <string name="detail_activity">Movie Detail</string>
+
+    <string name="api_key">4815e621a737b09be00a36f1152532e8</string>
+</resources>

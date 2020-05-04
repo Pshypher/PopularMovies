@@ -1,0 +1,2 @@
+rootProject.name='ud801_PopularMovies'
+include ':app'
