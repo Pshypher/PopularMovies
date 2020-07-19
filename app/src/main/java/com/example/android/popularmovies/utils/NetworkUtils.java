@@ -1,10 +1,13 @@
-package com.example.android.ud801_popularmovies.utils;
+package com.example.android.popularmovies.utils;
 
+import android.content.Context;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.example.android.ud801_popularmovies.data.Movie;
+import com.example.android.popularmovies.R;
+import com.example.android.popularmovies.data.Movie;
+import com.example.android.popularmovies.data.MovieTrailer;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -14,34 +17,37 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
 
 public class NetworkUtils {
 
-
-
     private static final String LOG_TAG = NetworkUtils.class.getSimpleName();
 
-    public static String buildPosterPathUrl(String baseUrl, String imageSize,
-                                            String moviePosterPath) {
+    public static String buildUrl(String baseUrl, String[] paths, String encodedPath, Map<String, String> queryMap) {
+
         Uri baseUri = Uri.parse(baseUrl);
         Uri.Builder builder = baseUri.buildUpon();
-        builder.appendPath(imageSize);
-        builder.appendEncodedPath(moviePosterPath);
+
+        if (paths != null) {
+            for (String path : paths) {
+                builder.appendPath(path);
+            }
+        }
+
+        if (!TextUtils.isEmpty(encodedPath)) builder.appendEncodedPath(encodedPath);
+
+        if (queryMap != null) {
+            Set<String> keys = queryMap.keySet();
+            for (String key: keys) {
+                builder.appendQueryParameter(key, (String) queryMap.get(key));
+            }
+        }
 
         Uri uri = builder.build();
-        return uri.toString();
-    }
-
-    public static String buildMovieDetailUrl(String baseUrl, String path, int id,
-                                             String paramKey, String paramValue) {
-        Uri baseUri = Uri.parse(baseUrl);
-        Uri.Builder builder = baseUri.buildUpon()
-                .appendPath(path)
-                .appendPath(Integer.toString(id))
-                .appendQueryParameter(paramKey, paramValue);
-        Uri uri = builder.build();
-
         return uri.toString();
     }
 
@@ -120,6 +126,33 @@ public class NetworkUtils {
         return movies;
     }
 
+    public static List<MovieTrailer> extractTrailers(String response) {
+        if (TextUtils.isEmpty(response)) {
+            return null;
+        }
+
+        List<MovieTrailer> trailers = new ArrayList<MovieTrailer>();
+
+        try {
+            JSONObject root = new JSONObject(response);
+            JSONArray results = root.getJSONArray("results");
+            for (int i = 0; i < results.length(); i++) {
+                JSONObject trailer = results.getJSONObject(i);
+                String site = trailer.getString("site");
+                if (site.equalsIgnoreCase("youtube")) {
+                    String key = trailer.getString("key");
+                    String name = trailer.getString("name");
+                    trailers.add(new MovieTrailer(key, name));
+                }
+            }
+
+        } catch (JSONException e) {
+            Log.e(LOG_TAG, "Problem parsing response to JSON object.");
+        }
+
+        return trailers;
+    }
+
     public static Integer fetchRuntime(String response) {
         if (TextUtils.isEmpty(response)) {
             return null;
@@ -133,5 +166,9 @@ public class NetworkUtils {
             Log.e(LOG_TAG, "Problem parsing response to JSON object.");
             return null;
         }
+    }
+
+    public static String getApiKey(Context context) {
+        return context.getResources().getString(R.string.api_key);
     }
 }

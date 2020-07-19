@@ -1,6 +1,5 @@
-package com.example.android.ud801_popularmovies;
+package com.example.android.popularmovies;
 
-import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,8 +8,8 @@ import android.widget.ImageView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.android.ud801_popularmovies.data.Movie;
-import com.example.android.ud801_popularmovies.utils.NetworkUtils;
+import com.example.android.popularmovies.data.Movie;
+import com.example.android.popularmovies.utils.NetworkUtils;
 import com.squareup.picasso.Picasso;
 
 import java.util.List;
@@ -26,7 +25,7 @@ public class MoviePosterAdapter extends
 
     public interface MovieAdapterClickListener {
 
-        void onClick(int position);
+        void onListItemClick(int position);
 
     }
 
@@ -87,19 +86,17 @@ public class MoviePosterAdapter extends
         public void onClick(View v) {
             if (listener != null) {
                 int position = getAdapterPosition();
-                listener.onClick(position);
+                listener.onListItemClick(position);
             }
         }
 
         public void bind(Movie movie) {
             if (movie.getPosterPath() != null) {
-                String urlString = NetworkUtils.buildPosterPathUrl(TMDB_IMAGE_BASE_URL, TMDB_IMAGE_SIZE,
-                        movie.getPosterPath());
+                String[] paths = new String[] { TMDB_IMAGE_SIZE };
+                String urlString = NetworkUtils.buildUrl(TMDB_IMAGE_BASE_URL, paths,
+                        movie.getPosterPath(), null);
                 Picasso.get().load(urlString).into(moviePosterDisplay);
             }
         }
-
-
-
     }
 }

@@ -1,0 +1,104 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    tools:context=".DetailActivity">
+
+    <TextView
+        android:id="@+id/tv_movie_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true"
+        android:background="@color/color_header_title"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:paddingLeft="24dp"
+        android:paddingTop="36dp"
+        android:paddingRight="16dp"
+        android:paddingBottom="36dp"
+        android:textColor="@android:color/white"
+        android:textSize="42sp"
+        tools:text="Chappie" />
+
+    <ImageView
+        android:id="@+id/iv_thumbnail"
+        android:layout_width="185dp"
+        android:layout_height="300dp"
+        android:layout_below="@id/tv_movie_title"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="24dp"
+        android:layout_marginTop="8dp"
+        android:scaleType="centerCrop" />
+
+    <LinearLayout
+        android:id="@+id/layout_movie_details"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tv_movie_title"
+        android:layout_marginLeft="32dp"
+        android:layout_marginTop="8dp"
+        android:layout_toRightOf="@id/iv_thumbnail"
+        android:orientation="vertical"
+        android:padding="8dp">
+
+        <TextView
+            android:id="@+id/tv_year_of_release"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:textSize="30sp"
+            tools:text="2015" />
+
+        <TextView
+            android:id="@+id/tv_running_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:textSize="24sp"
+            android:textStyle="bold|italic"
+            tools:text="120min" />
+
+        <TextView
+            android:id="@+id/tv_movie_rating"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:textColor="@android:color/black"
+            android:textStyle="bold"
+            tools:text="8.1/10" />
+
+        <Button
+            android:id="@+id/btn_favourite"
+            android:layout_width="88dp"
+            android:layout_height="wrap_content"
+            android:background="@color/color_cyan"
+            android:padding="8dp"
+            android:text="@string/label_favorite_button"
+            android:textColor="@color/gray" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tv_plot_synopsis"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/iv_thumbnail"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginLeft="16dp"
+        android:layout_marginTop="24dp"
+        android:layout_marginRight="16dp"
+        android:textSize="18sp"
+        tools:text="@string/placeholder_overview_text" />
+
+    <View
+        android:id="@+id/seperator"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_below="@id/tv_plot_synopsis"
+        android:layout_marginLeft="16dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginRight="16dp"
+        android:background="@color/gray" />
+</RelativeLayout>

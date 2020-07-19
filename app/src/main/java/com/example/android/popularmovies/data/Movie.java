@@ -1,4 +1,4 @@
-package com.example.android.ud801_popularmovies.data;
+package com.example.android.popularmovies.data;
 
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -59,7 +59,7 @@ public class Movie implements Parcelable {
         mPosterPath = posterPath;
     }
 
-    public String getMovieTitle() {
+    public String getTitle() {
         return mMovieTitle;
     }
 
@@ -67,7 +67,7 @@ public class Movie implements Parcelable {
         mMovieTitle = name;
     }
 
-    public double getMovieRating() {
+    public double getRating() {
         return mMovieRating;
     }
 
@@ -83,7 +83,7 @@ public class Movie implements Parcelable {
         mReleaseDate = releaseDate;
     }
 
-    public String getMoviePlotSynopsis() {
+    public String getSynopsis() {
         return mMoviePlotSynopsis;
     }
 
