@@ -2,6 +2,8 @@ package com.example.android.popularmovies;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.app.Activity;
 import android.content.Context;
@@ -16,6 +18,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.example.android.popularmovies.data.Movie;
@@ -33,7 +36,7 @@ import java.util.Locale;
 import java.util.Map;
 
 public class DetailActivity extends AppCompatActivity
-        implements MovieTrailerAdapter.ListItemClickListener {
+        implements MovieTrailersAdapter.ListItemClickListener {
 
     private TextView mMovieTitleTextView;
     private TextView mMovieRuntimeTextView;
@@ -41,7 +44,18 @@ public class DetailActivity extends AppCompatActivity
     private TextView mReleaseYearTextView;
     private TextView mMovieRatingTextView;
     private TextView mPlotSynopsisTextView;
-    private MovieTrailerAdapter mTrailerAdapter;
+
+    private MovieTrailersAdapter mMovieTrailersAdapter;
+    private TextView mOnTrailersErrorResponseTextView;
+    private ProgressBar mMovieTrailersProgressBar;
+    private RecyclerView mMovieTrailersRecyclerView;
+
+    private UserReviewsAdapter mUserReviewsAdapter;
+    private TextView mOnReviewsErrorResponseTextView;
+    private ProgressBar mReviewsProgressBar;
+    private RecyclerView mReviewsRecyclerView;
+
+
     private boolean mMarkedAsFavorite;
 
     private static final String MOVIE_EXTRAS = "details";
@@ -75,6 +89,7 @@ public class DetailActivity extends AppCompatActivity
                 loadImage(movie);
                 bind(movie);
                 fetchMovieRuntime(movie.getId());
+                fetchMovieTrailers(movie.getId());
             }
         }
     }
@@ -112,6 +127,17 @@ public class DetailActivity extends AppCompatActivity
         mMovieRuntimeTextView = (TextView) findViewById(R.id.tv_running_time);
         mMovieRatingTextView = (TextView) findViewById(R.id.tv_movie_rating);
         mPlotSynopsisTextView = (TextView) findViewById(R.id.tv_plot_synopsis);
+
+        mOnTrailersErrorResponseTextView = (TextView) findViewById(R.id.tv_error_msg_trailers);
+        mMovieTrailersProgressBar = (ProgressBar) findViewById(R.id.pb_trailers);
+        mMovieTrailersRecyclerView = (RecyclerView) findViewById(R.id.rv_trailer);
+        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this,
+                RecyclerView.VERTICAL, false);
+        mMovieTrailersRecyclerView.setLayoutManager(layoutManager);
+        mMovieTrailersAdapter = new MovieTrailersAdapter(null, this);
+        mMovieTrailersRecyclerView.setAdapter(mMovieTrailersAdapter);
+        mMovieTrailersRecyclerView.setHasFixedSize(true);
+
         Button btn = (Button) findViewById(R.id.btn_favourite);
         btn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -199,7 +225,9 @@ public class DetailActivity extends AppCompatActivity
 
     private void fetchMovieTrailers(int id) {
         String[] paths = new String[] { TMDB_PATH_MOVIE, Integer.toString(id), TMDB_PATH_VIDEOS };
-        String urlString = NetworkUtils.buildUrl(TMDB_BASE_URL, paths, null, null);
+        Map<String, String> queryMap = new HashMap<>();
+        queryMap.put(TMDB_API_KEY, NetworkUtils.getApiKey(DetailActivity.this));
+        String urlString = NetworkUtils.buildUrl(TMDB_BASE_URL, paths, null, queryMap);
 
         try {
             URL url = new URL(urlString);
@@ -215,7 +243,10 @@ public class DetailActivity extends AppCompatActivity
         protected void onPreExecute() {
             super.onPreExecute();
             if (!isConnected()) {
-                showErrorMessage();
+                Context context = DetailActivity.this;
+                mOnTrailersErrorResponseTextView.setText(context.getString(R.string.error_network_connection));
+                showErrorMessage(mMovieTrailersRecyclerView, mOnTrailersErrorResponseTextView,
+                        mMovieTrailersProgressBar);
             }
         }
 
@@ -236,8 +267,17 @@ public class DetailActivity extends AppCompatActivity
         }
 
         @Override
-        protected void onPostExecute(List<MovieTrailer> movieTrailers) {
-            super.onPostExecute(movieTrailers);
+        protected void onPostExecute(List<MovieTrailer> trailers) {
+            super.onPostExecute(trailers);
+
+            if (trailers == null) {
+                showErrorMessage(mMovieTrailersRecyclerView, mOnTrailersErrorResponseTextView,
+                        mMovieTrailersProgressBar);
+            } else {
+                mMovieTrailersAdapter.addAll(trailers);
+                displayResults(mMovieTrailersRecyclerView, mOnTrailersErrorResponseTextView,
+                        mMovieTrailersProgressBar);
+            }
         }
     }
 
@@ -248,7 +288,15 @@ public class DetailActivity extends AppCompatActivity
         return networkInfo != null && networkInfo.isConnectedOrConnecting();
     }
 
-    private void showErrorMessage() {
+    private void displayResults(RecyclerView rv, TextView tv, ProgressBar pb) {
+        rv.setVisibility(View.VISIBLE);
+        tv.setVisibility(View.INVISIBLE);
+        pb.setVisibility(View.INVISIBLE);
+    }
 
+    private void showErrorMessage(RecyclerView rv, TextView tv, ProgressBar pb) {
+        rv.setVisibility(View.INVISIBLE);
+        tv.setVisibility(View.VISIBLE);
+        pb.setVisibility(View.INVISIBLE);
     }
 }

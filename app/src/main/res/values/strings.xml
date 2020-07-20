@@ -3,7 +3,7 @@
 
     <string name="error_message">Failed to get movie posters, please try again.</string>
 
-    <string name="error_network_connection">Check your network connection.</string>
+    <string name="error_network_connection">Check network connection.</string>
 
     <string name="label_favorite_button">Mark as favorite</string>
 

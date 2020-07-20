@@ -11,15 +11,19 @@
         android:layout_width="match_parent"
         android:layout_height="79dp"
         android:orientation="horizontal"
-        android:padding="16dp">
+        android:paddingStart="16dp"
+        android:paddingLeft="8dp"
+        android:paddingTop="16dp"
+        android:paddingEnd="16dp"
+        android:paddingRight="16dp"
+        android:paddingBottom="16dp">
 
         <ImageView
             android:id="@+id/play"
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:layout_gravity="center_vertical"
-            android:layout_marginStart="8dp"
-            android:layout_marginLeft="8dp"
+
             android:src="@drawable/ic_baseline_play_arrow_24"
             app:srcCompat="@drawable/ic_baseline_play_arrow_24" />
 
@@ -28,8 +32,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
-            android:layout_marginStart="40dp"
-            android:layout_marginLeft="40dp"
+            android:layout_marginStart="32dp"
+            android:layout_marginLeft="32dp"
             android:textAppearance="@style/TextAppearance.AppCompat.Medium"
             tools:text="Trailer #" />
     </LinearLayout>

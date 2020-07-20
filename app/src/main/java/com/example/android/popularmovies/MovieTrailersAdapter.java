@@ -12,16 +12,21 @@ import com.example.android.popularmovies.data.MovieTrailer;
 
 import java.util.List;
 
-public class MovieTrailerAdapter extends RecyclerView.Adapter<MovieTrailerAdapter.VideoInfoHolder> {
+public class MovieTrailersAdapter extends RecyclerView.Adapter<MovieTrailersAdapter.VideoInfoHolder> {
 
     private List<MovieTrailer> mTrailers;
     private ListItemClickListener mOnListItemClickListener;
+
+    public void addAll(List<MovieTrailer> trailers) {
+        mTrailers = trailers;
+        notifyDataSetChanged();
+    }
 
     public interface ListItemClickListener {
         void onListItemClick(String key);
     }
 
-    public MovieTrailerAdapter(List<MovieTrailer> trailers, ListItemClickListener listener) {
+    public MovieTrailersAdapter(List<MovieTrailer> trailers, ListItemClickListener listener) {
         mTrailers = trailers;
         mOnListItemClickListener = listener;
     }
@@ -43,6 +48,7 @@ public class MovieTrailerAdapter extends RecyclerView.Adapter<MovieTrailerAdapte
 
     @Override
     public int getItemCount() {
+        if (mTrailers == null) return 0;
         return mTrailers.size();
     }
 
