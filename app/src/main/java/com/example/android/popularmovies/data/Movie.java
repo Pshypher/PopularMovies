@@ -1,7 +1,10 @@
 package com.example.android.popularmovies.data;
 
+import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
+
+import androidx.annotation.RequiresApi;
 
 public class Movie implements Parcelable {
 
@@ -11,6 +14,8 @@ public class Movie implements Parcelable {
     private double mMovieRating;
     private String mReleaseDate;
     private String mMoviePlotSynopsis;
+
+    private int markedAsFavourite;
 
     public Movie(int id, String posterPath, String name, double ratings, String releaseDate,
                  String overview) {
@@ -29,9 +34,11 @@ public class Movie implements Parcelable {
         mMovieRating = in.readDouble();
         mReleaseDate = in.readString();
         mMoviePlotSynopsis = in.readString();
+        markedAsFavourite = in.readInt();
     }
 
     public static final Parcelable.Creator<Movie> CREATOR = new Parcelable.Creator<Movie>() {
+        @RequiresApi(api = Build.VERSION_CODES.Q)
         @Override
         public Movie createFromParcel(Parcel in) {
             return new Movie(in);
@@ -91,6 +98,14 @@ public class Movie implements Parcelable {
         mMoviePlotSynopsis = overview;
     }
 
+    public boolean isMarkedAsFavourite() {
+        return markedAsFavourite > 0;
+    }
+
+    public void setMarkedAsFavourite(int value) {
+        markedAsFavourite = value;
+    }
+
     @Override
     public int describeContents() {
         return 0;
@@ -104,5 +119,6 @@ public class Movie implements Parcelable {
         dest.writeDouble(mMovieRating);
         dest.writeString(mReleaseDate);
         dest.writeString(mMoviePlotSynopsis);
+        dest.writeInt(markedAsFavourite);
     }
 }

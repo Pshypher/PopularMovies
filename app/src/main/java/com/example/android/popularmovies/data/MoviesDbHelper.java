@@ -23,7 +23,7 @@ public class MoviesDbHelper extends SQLiteOpenHelper {
             "DROP TABLE IF EXISTS " + MoviesEntry.TABLE_NAME;
 
     // If you change the database schema, you must increment the database version
-    public static final int DATABASE_VERSION = 4;
+    public static final int DATABASE_VERSION = 1;
     public static final String DATABASE_NAME = "FavouriteMovies.db";
 
     public MoviesDbHelper(@Nullable Context context) {

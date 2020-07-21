@@ -71,11 +71,11 @@
 
         <Button
             android:id="@+id/btn_favourite"
-            android:layout_width="88dp"
+            android:layout_width="90dp"
             android:layout_height="wrap_content"
             android:background="@color/color_cyan"
             android:padding="8dp"
-            android:text="@string/label_favorite_button"
+            android:text="@string/btn_favourite"
             android:textColor="@color/gray" />
     </LinearLayout>
 

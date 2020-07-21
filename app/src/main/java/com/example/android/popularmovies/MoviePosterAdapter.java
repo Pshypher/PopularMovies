@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.android.popularmovies.data.Movie;
 import com.example.android.popularmovies.utils.NetworkUtils;
+import com.squareup.picasso.NetworkPolicy;
 import com.squareup.picasso.Picasso;
 
 import java.util.List;
@@ -34,8 +35,7 @@ public class MoviePosterAdapter extends
     }
 
     public void addAll(List<Movie> movies) {
-        mMovies.clear();
-        mMovies.addAll(movies);
+        mMovies = movies;
         notifyDataSetChanged();
     }
 
@@ -95,6 +95,13 @@ public class MoviePosterAdapter extends
                 String[] paths = new String[] { TMDB_IMAGE_SIZE };
                 String urlString = NetworkUtils.buildUrl(TMDB_IMAGE_BASE_URL, paths,
                         movie.getPosterPath(), null);
+
+                if (movie.isMarkedAsFavourite()) {
+                    Picasso.get().load(urlString).networkPolicy(NetworkPolicy.OFFLINE)
+                            .into(moviePosterDisplay);
+                    return;
+                }
+
                 Picasso.get().load(urlString).into(moviePosterDisplay);
             }
         }

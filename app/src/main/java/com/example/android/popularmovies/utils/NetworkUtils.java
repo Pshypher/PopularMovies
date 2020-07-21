@@ -8,6 +8,7 @@ import android.util.Log;
 import com.example.android.popularmovies.R;
 import com.example.android.popularmovies.data.Movie;
 import com.example.android.popularmovies.data.MovieTrailer;
+import com.example.android.popularmovies.data.UserReview;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -26,6 +27,9 @@ import java.util.Set;
 public class NetworkUtils {
 
     private static final String LOG_TAG = NetworkUtils.class.getSimpleName();
+    public static final String RESULTS = "results";
+    public static final String SITE = "site";
+    public static final String ID = "id";
 
     public static String buildUrl(String baseUrl, String[] paths, String encodedPath, Map<String, String> queryMap) {
 
@@ -97,6 +101,13 @@ public class NetworkUtils {
     }
 
     public static Movie[] extractMovies(String response) {
+
+        final String POSTER_PATH = "poster_path";
+        final String TITLE = "title";
+        final String VOTE_AVERAGE = "vote_average";
+        final String RELEASE_DATE = "release_date";
+        final String OVERVIEW = "overview";
+
         if (TextUtils.isEmpty(response)) {
             return null;
         }
@@ -104,17 +115,17 @@ public class NetworkUtils {
         Movie[] movies = null;
         try {
             JSONObject root = new JSONObject(response);
-            JSONArray results = root.getJSONArray("results");
+            JSONArray results = root.getJSONArray(RESULTS);
 
             movies = new Movie[results.length()];
             for (int i = 0; i < results.length(); i++) {
                 JSONObject movie = results.getJSONObject(i);
-                int id = movie.getInt("id");
-                String posterPath = movie.getString("poster_path");
-                String title = movie.getString("title");
-                double ratings = movie.getDouble("vote_average");
-                String releaseDate = movie.getString("release_date");
-                String overview = movie.getString("overview");
+                int id = movie.getInt(ID);
+                String posterPath = movie.getString(POSTER_PATH);
+                String title = movie.getString(TITLE);
+                double ratings = movie.getDouble(VOTE_AVERAGE);
+                String releaseDate = movie.getString(RELEASE_DATE);
+                String overview = movie.getString(OVERVIEW);
 
                 movies[i] = new Movie(id, posterPath, title, ratings, releaseDate, overview);
             }
@@ -127,6 +138,11 @@ public class NetworkUtils {
     }
 
     public static List<MovieTrailer> extractTrailers(String response) {
+
+        final String VALUE_SITE = "youtube";
+        final String KEY = "key";
+        final String NAME = "name";
+
         if (TextUtils.isEmpty(response)) {
             return null;
         }
@@ -135,13 +151,14 @@ public class NetworkUtils {
 
         try {
             JSONObject root = new JSONObject(response);
-            JSONArray results = root.getJSONArray("results");
+            JSONArray results = root.getJSONArray(RESULTS);
             for (int i = 0; i < results.length(); i++) {
                 JSONObject trailer = results.getJSONObject(i);
-                String site = trailer.getString("site");
-                if (site.equalsIgnoreCase("youtube")) {
-                    String key = trailer.getString("key");
-                    String name = trailer.getString("name");
+                String site = trailer.getString(SITE);
+
+                if (site.equalsIgnoreCase(VALUE_SITE)) {
+                    String key = trailer.getString(KEY);
+                    String name = trailer.getString(NAME);
                     trailers.add(new MovieTrailer(key, name));
                 }
             }
@@ -153,14 +170,44 @@ public class NetworkUtils {
         return trailers;
     }
 
+    public static List<UserReview> extractReviews(String response) {
+
+        final String AUTHOR = "author";
+        final String CONTENT = "content";
+
+        if (TextUtils.isEmpty(response)) {
+            return null;
+        }
+
+        List<UserReview> reviews = null;
+        try {
+            JSONObject root = new JSONObject(response);
+            JSONArray results = root.getJSONArray(RESULTS);
+            reviews = new ArrayList<UserReview>();
+            for (int i = 0; i < results.length(); i++) {
+                JSONObject res = results.getJSONObject(i);
+                String author = res.getString(AUTHOR);
+                String content = res.getString(CONTENT);
+                reviews.add(new UserReview(author, content));
+            }
+        } catch (JSONException e) {
+            Log.e(LOG_TAG, "Problem parsing response to JSON object.");
+        }
+
+        return reviews;
+    }
+
     public static Integer fetchRuntime(String response) {
+
+        final String RUNTIME = "runtime";
+
         if (TextUtils.isEmpty(response)) {
             return null;
         }
 
         try {
             JSONObject movie = new JSONObject(response);
-            Integer runtime = movie.getInt("runtime");
+            Integer runtime = movie.getInt(RUNTIME);
             return runtime;
         } catch (JSONException e) {
             Log.e(LOG_TAG, "Problem parsing response to JSON object.");

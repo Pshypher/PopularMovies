@@ -1,8 +1,10 @@
 package com.example.android.popularmovies.utils;
 
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.net.Uri;
 
 import com.example.android.popularmovies.data.Movie;
 import static com.example.android.popularmovies.data.MoviesContract.MoviesEntry;
@@ -48,6 +50,7 @@ public class DatabaseUtils {
             double rating = cursor.getDouble(INDEX_USER_RATING);
             String date = cursor.getString(INDEX_RELEASE_DATE);
             movies[i] = new Movie(id, posterPath, title, rating, date, synopsis);
+            movies[i].setMarkedAsFavourite(1);
             cursor.moveToNext();
         }
 
@@ -64,5 +67,11 @@ public class DatabaseUtils {
         values.put(MoviesEntry.COLUMN_RELEASE_DATE, movie.getReleaseDate());
 
         context.getContentResolver().insert(MoviesEntry.CONTENT_URI, values);
+    }
+
+    public static void delete(Context context, Movie movie) {
+        int id = movie.getId();
+        Uri uri = ContentUris.withAppendedId(MoviesEntry.CONTENT_URI, id);
+        context.getContentResolver().delete(uri, null, null);
     }
 }

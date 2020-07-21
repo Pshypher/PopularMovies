@@ -1,6 +1,5 @@
 package com.example.android.popularmovies;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -14,7 +13,6 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -23,8 +21,10 @@ import android.widget.TextView;
 
 import com.example.android.popularmovies.data.Movie;
 import com.example.android.popularmovies.data.MovieTrailer;
+import com.example.android.popularmovies.data.UserReview;
 import com.example.android.popularmovies.utils.DatabaseUtils;
 import com.example.android.popularmovies.utils.NetworkUtils;
+import com.squareup.picasso.NetworkPolicy;
 import com.squareup.picasso.Picasso;
 
 import java.io.IOException;
@@ -55,9 +55,6 @@ public class DetailActivity extends AppCompatActivity
     private ProgressBar mReviewsProgressBar;
     private RecyclerView mReviewsRecyclerView;
 
-
-    private boolean mMarkedAsFavorite;
-
     private static final String MOVIE_EXTRAS = "details";
 
     private static final String TMDB_BASE_URL = "https://api.themoviedb.org/3/";
@@ -72,7 +69,7 @@ public class DetailActivity extends AppCompatActivity
     private static final String YOUTUBE_VIEW_PATH = "watch";
     private static final String YOUTUBE_VIEW_KEY = "v";
 
-    private static final String MARKED_AS_FAVOURITE = "favourite?";
+    private static final String CLICKED = "clicked?";
 
     private static final String LOG_TAG = DetailActivity.class.getSimpleName();
 
@@ -88,19 +85,12 @@ public class DetailActivity extends AppCompatActivity
                 initViews(movie);
                 loadImage(movie);
                 bind(movie);
-                fetchMovieRuntime(movie.getId());
-                fetchMovieTrailers(movie.getId());
+                int id = movie.getId();
+                fetchMovieRuntime(id);
+                fetchMovieTrailers(id);
+                fetchUserReviews(id);
             }
         }
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        int id = item.getItemId();
-        if (id == android.R.id.home) {
-
-        }
-        return super.onOptionsItemSelected(item);
     }
 
     private void bind(Movie movie) {
@@ -116,18 +106,70 @@ public class DetailActivity extends AppCompatActivity
             String[] paths = new String[] { TMDB_IMAGE_SIZE };
             String urlString = NetworkUtils.buildUrl(TMDB_IMAGE_BASE_URL, paths,
                     movie.getPosterPath(), null);
-            Picasso.get().load(urlString).into(mMoviePosterImageView);
+            if (movie.isMarkedAsFavourite()) {
+                Picasso.get().load(urlString)
+                        .networkPolicy(NetworkPolicy.OFFLINE)
+                        .into(mMoviePosterImageView);
+                return;
+            }
+
+            Picasso.get().load(urlString)
+                    .into(mMoviePosterImageView);
         }
     }
 
     private void initViews(Movie movie) {
-        mMovieTitleTextView = (TextView) findViewById(R.id.tv_movie_title);
-        mMoviePosterImageView = (ImageView) findViewById(R.id.iv_thumbnail);
-        mReleaseYearTextView = (TextView) findViewById(R.id.tv_year_of_release);
-        mMovieRuntimeTextView = (TextView) findViewById(R.id.tv_running_time);
-        mMovieRatingTextView = (TextView) findViewById(R.id.tv_movie_rating);
-        mPlotSynopsisTextView = (TextView) findViewById(R.id.tv_plot_synopsis);
+        setupDetailViews();
+        setupTrailerViews();
+        setupReviewsLayout();
 
+        Button btn = (Button) findViewById(R.id.btn_favourite);
+        if (movie.isMarkedAsFavourite()) {
+            btn.setText(getString(R.string.btn_remove));
+        }
+        btn.setOnClickListener(new View.OnClickListener() {
+
+            boolean clicked = true;
+
+            @Override
+            public void onClick(View v) {
+                if (movie.isMarkedAsFavourite()) {
+                    (new AsyncTask() {
+                        @Override
+                        protected Object doInBackground(Object[] objects) {
+                            DatabaseUtils.delete(DetailActivity.this, movie);
+                            return null;
+                        }
+                    }).execute();
+                } else {
+                    (new AsyncTask() {
+                        @Override
+                        protected Object doInBackground(Object[] objects) {
+                            DatabaseUtils.insert(DetailActivity.this, movie);
+                            return null;
+                        }
+                    }).execute();
+                }
+
+                Intent intent = new Intent();
+                intent.putExtra(CLICKED, clicked);
+                setResult(Activity.RESULT_OK, intent);
+                finish();
+            }
+        });
+    }
+
+    private void setupReviewsLayout() {
+        mOnReviewsErrorResponseTextView = (TextView) findViewById(R.id.tv_error_msg_reviews);
+        mReviewsProgressBar = (ProgressBar) findViewById(R.id.pb_reviews);
+        mReviewsRecyclerView = (RecyclerView) findViewById(R.id.rv_reviews);
+        mReviewsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        mUserReviewsAdapter = new UserReviewsAdapter(null);
+        mReviewsRecyclerView.setAdapter(mUserReviewsAdapter);
+        mReviewsRecyclerView.setHasFixedSize(true);
+    }
+
+    private void setupTrailerViews() {
         mOnTrailersErrorResponseTextView = (TextView) findViewById(R.id.tv_error_msg_trailers);
         mMovieTrailersProgressBar = (ProgressBar) findViewById(R.id.pb_trailers);
         mMovieTrailersRecyclerView = (RecyclerView) findViewById(R.id.rv_trailer);
@@ -137,26 +179,15 @@ public class DetailActivity extends AppCompatActivity
         mMovieTrailersAdapter = new MovieTrailersAdapter(null, this);
         mMovieTrailersRecyclerView.setAdapter(mMovieTrailersAdapter);
         mMovieTrailersRecyclerView.setHasFixedSize(true);
+    }
 
-        Button btn = (Button) findViewById(R.id.btn_favourite);
-        btn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mMarkedAsFavorite = true;
-                (new AsyncTask() {
-                    @Override
-                    protected Object doInBackground(Object[] objects) {
-                        DatabaseUtils.insert(DetailActivity.this, movie);
-                        return null;
-                    }
-                }).execute();
-
-                Intent intent = new Intent();
-                intent.putExtra(MARKED_AS_FAVOURITE, mMarkedAsFavorite);
-                setResult(Activity.RESULT_OK, intent);
-                finish();
-            }
-        });
+    private void setupDetailViews() {
+        mMovieTitleTextView = (TextView) findViewById(R.id.tv_movie_title);
+        mMoviePosterImageView = (ImageView) findViewById(R.id.iv_thumbnail);
+        mReleaseYearTextView = (TextView) findViewById(R.id.tv_year_of_release);
+        mMovieRuntimeTextView = (TextView) findViewById(R.id.tv_running_time);
+        mMovieRatingTextView = (TextView) findViewById(R.id.tv_movie_rating);
+        mPlotSynopsisTextView = (TextView) findViewById(R.id.tv_plot_synopsis);
     }
 
     private void fetchMovieRuntime(int id) {
@@ -244,7 +275,7 @@ public class DetailActivity extends AppCompatActivity
             super.onPreExecute();
             if (!isConnected()) {
                 Context context = DetailActivity.this;
-                mOnTrailersErrorResponseTextView.setText(context.getString(R.string.error_network_connection));
+                mOnTrailersErrorResponseTextView.setText(context.getString(R.string.error_network));
                 showErrorMessage(mMovieTrailersRecyclerView, mOnTrailersErrorResponseTextView,
                         mMovieTrailersProgressBar);
             }
@@ -281,6 +312,63 @@ public class DetailActivity extends AppCompatActivity
         }
     }
 
+    private void fetchUserReviews(int id) {
+        String[] paths = new String[] { TMDB_PATH_MOVIE, Integer.toString(id), TMDB_PATH_REVIEWS };
+        Map<String, String> queryMap = new HashMap<>();
+        queryMap.put(TMDB_API_KEY, NetworkUtils.getApiKey(this));
+        String urlString = NetworkUtils.buildUrl(TMDB_BASE_URL, paths, null, queryMap);
+
+        try {
+            URL url = new URL(urlString);
+            new FetchUserReviewsAsyncTask().execute(url);
+        } catch (MalformedURLException e) {
+            Log.e(LOG_TAG, "Problem parsing url string " + urlString);
+        }
+    }
+
+    class FetchUserReviewsAsyncTask extends AsyncTask<URL, Void, List<UserReview>> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            if (!isConnected()) {
+                Context context = DetailActivity.this;
+                mOnReviewsErrorResponseTextView.setText(context.getString(R.string.error_network));
+                showErrorMessage(mReviewsRecyclerView, mOnReviewsErrorResponseTextView,
+                        mReviewsProgressBar);
+            }
+        }
+
+        @Override
+        protected List<UserReview> doInBackground(URL... params) {
+            URL url = params[0];
+
+            List<UserReview> reviews = null;
+            try {
+                String response = NetworkUtils.makeHttpRequest(url);
+                reviews = NetworkUtils.extractReviews(response);
+            } catch (IOException e) {
+                Log.e(LOG_TAG, "Problem with http request.");
+                e.printStackTrace();
+            }
+            return reviews;
+        }
+
+        @Override
+        protected void onPostExecute(List<UserReview> reviews) {
+            super.onPostExecute(reviews);
+
+            if (reviews == null) {
+                showErrorMessage(mReviewsRecyclerView, mOnReviewsErrorResponseTextView,
+                        mReviewsProgressBar);
+            } else {
+                mUserReviewsAdapter.addAll(reviews);
+                displayResults(mReviewsRecyclerView, mOnReviewsErrorResponseTextView,
+                        mReviewsProgressBar);
+            }
+        }
+    }
+
     private boolean isConnected() {
         ConnectivityManager manager =
                 (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -299,4 +387,6 @@ public class DetailActivity extends AppCompatActivity
         tv.setVisibility(View.VISIBLE);
         pb.setVisibility(View.INVISIBLE);
     }
+
+
 }

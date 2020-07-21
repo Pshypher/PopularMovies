@@ -22,7 +22,8 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.android.popularmovies.MainActivity" />
         </activity>
-        <activity android:name="com.example.android.popularmovies.MainActivity">
+        <activity android:name="com.example.android.popularmovies.MainActivity"
+            android:launchMode="standard">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

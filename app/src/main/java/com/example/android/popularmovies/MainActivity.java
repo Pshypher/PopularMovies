@@ -51,7 +51,7 @@ public class MainActivity extends AppCompatActivity implements
     private TextView mNetworkStatusDisplay;
     private ProgressBar mLoadingIndicator;
 
-    private boolean mMarkedAsFavourite;
+    private boolean wasClicked;
 
     private static final String TMDB_BASE_URL = "https://api.themoviedb.org/3";
     private static final String TMDB_DISCOVERY_PATH = "discover";
@@ -72,7 +72,7 @@ public class MainActivity extends AppCompatActivity implements
     private static final int FAVOURITE_LOADER_ID = 205;
 
     private static final String RESOURCE_ID = "location";
-    private static final String MARKED_AS_FAVOURITE = "favourite?";
+        private static final String CLICKED = "clicked?";
 
     ActivityResultLauncher<Intent> mStartForResult = registerForActivityResult(new StartActivityForResult(),
             new ActivityResultCallback<ActivityResult>() {
@@ -80,7 +80,7 @@ public class MainActivity extends AppCompatActivity implements
                 public void onActivityResult(ActivityResult result) {
                     if (result.getResultCode() == Activity.RESULT_OK) {
                         Intent intent = result.getData();
-                        mMarkedAsFavourite = intent.getBooleanExtra(MARKED_AS_FAVOURITE, false);
+                        wasClicked = intent.getBooleanExtra(CLICKED, false);
                     }
                 }
             });
@@ -138,6 +138,15 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        if (wasClicked) {
+            getSupportLoaderManager().restartLoader(FAVOURITE_LOADER_ID, null, this);
+        }
+
+    }
+
+    @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
 
         Bundle args = new Bundle();
@@ -154,18 +163,11 @@ public class MainActivity extends AppCompatActivity implements
                 getSupportLoaderManager().initLoader(TOP_RATED_LOADER_ID, args, this);
                 return true;
             case R.id.action_favourite_movies:
-                loadFavourites();
+                getSupportLoaderManager().initLoader(FAVOURITE_LOADER_ID, null, this);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
-    }
-
-    private void loadFavourites() {
-        if (mMarkedAsFavourite)
-            getSupportLoaderManager().restartLoader(FAVOURITE_LOADER_ID, null, this);
-        else
-            getSupportLoaderManager().initLoader(FAVOURITE_LOADER_ID, null, this);
     }
 
     private boolean isConnected() {
@@ -221,8 +223,8 @@ public class MainActivity extends AppCompatActivity implements
                         String response = NetworkUtils.makeHttpRequest(url);
                         movies = NetworkUtils.extractMovies(response);
                     } catch (MalformedURLException e) {
-                        e.printStackTrace();
                         Log.e(LOG_TAG, "URL format " + urlString + " was not properly specified.");
+                        e.printStackTrace();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }

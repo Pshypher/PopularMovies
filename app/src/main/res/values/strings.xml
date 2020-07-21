@@ -1,11 +1,14 @@
 <resources>
+
     <string name="app_name">Popular Movies</string>
 
     <string name="error_message">Failed to get movie posters, please try again.</string>
 
-    <string name="error_network_connection">Check network connection.</string>
+    <string name="error_network">Check network connection.</string>
 
-    <string name="label_favorite_button">Mark as favorite</string>
+    <string name="btn_favourite">Mark as favourite</string>
+
+    <string name="btn_remove">Remove</string>
 
     <string name="placeholder_overview_text">Every child comes into the world full of promise and none more so than Chappie:
         he is gifted, special, a prodigy. Chappie he is a robot.</string>
@@ -17,10 +20,15 @@
     <string name="detail_activity">Movie Detail</string>
 
     <string name="api_key">4815e621a737b09be00a36f1152532e8</string>
+
     <string name="sort_by_favourites_movies">Favourites</string>
+
     <string name="label_trailers">Trailers:</string>
-    <string name="trailer_index">Trailer</string>
+
     <string name="error_msg_trailer">Could not load movie trailers</string>
+
     <string name="label_reviews">User Reviews:</string>
+
     <string name="error_msg_reviews">Failed to get user reviews</string>
+
 </resources>
