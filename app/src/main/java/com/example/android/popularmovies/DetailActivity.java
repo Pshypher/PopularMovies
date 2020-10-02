@@ -1,6 +1,9 @@
 package com.example.android.popularmovies;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.NavUtils;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -13,12 +16,14 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.example.android.popularmovies.data.Error;
 import com.example.android.popularmovies.data.Movie;
 import com.example.android.popularmovies.data.MovieTrailer;
 import com.example.android.popularmovies.data.UserReview;
@@ -30,13 +35,14 @@ import com.squareup.picasso.Picasso;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
 public class DetailActivity extends AppCompatActivity
-        implements MovieTrailersAdapter.ListItemClickListener {
+        implements ExtrasAdapter.ListItemClickListener {
 
     private TextView mMovieTitleTextView;
     private TextView mMovieRuntimeTextView;
@@ -45,15 +51,12 @@ public class DetailActivity extends AppCompatActivity
     private TextView mMovieRatingTextView;
     private TextView mPlotSynopsisTextView;
 
-    private MovieTrailersAdapter mMovieTrailersAdapter;
-    private TextView mOnTrailersErrorResponseTextView;
-    private ProgressBar mMovieTrailersProgressBar;
-    private RecyclerView mMovieTrailersRecyclerView;
+    private ExtrasAdapter mExtrasAdapter;
+    private TextView mErrorTextView;
+    private ProgressBar mLoadingIndicator;
+    private RecyclerView mRecyclerView;
 
-    private UserReviewsAdapter mUserReviewsAdapter;
-    private TextView mOnReviewsErrorResponseTextView;
-    private ProgressBar mReviewsProgressBar;
-    private RecyclerView mReviewsRecyclerView;
+    private ArrayList<Object> extraDetails;
 
     private static final String MOVIE_EXTRAS = "details";
 
@@ -77,6 +80,11 @@ public class DetailActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail);
+        ActionBar actionBar = getSupportActionBar();
+
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+        }
 
         Intent intent = getIntent();
         if (intent != null) {
@@ -91,6 +99,17 @@ public class DetailActivity extends AppCompatActivity
                 fetchUserReviews(id);
             }
         }
+
+        extraDetails = new ArrayList<>();
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        int id = item.getItemId();
+        if (id == android.R.id.home) {
+            NavUtils.navigateUpFromSameTask(this);
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     private void bind(Movie movie) {
@@ -120,8 +139,7 @@ public class DetailActivity extends AppCompatActivity
 
     private void initViews(Movie movie) {
         setupDetailViews();
-        setupTrailerViews();
-        setupReviewsLayout();
+        initExtrasViews();
 
         Button btn = (Button) findViewById(R.id.btn_favourite);
         if (movie.isMarkedAsFavourite()) {
@@ -159,26 +177,17 @@ public class DetailActivity extends AppCompatActivity
         });
     }
 
-    private void setupReviewsLayout() {
-        mOnReviewsErrorResponseTextView = (TextView) findViewById(R.id.tv_error_msg_reviews);
-        mReviewsProgressBar = (ProgressBar) findViewById(R.id.pb_reviews);
-        mReviewsRecyclerView = (RecyclerView) findViewById(R.id.rv_reviews);
-        mReviewsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        mUserReviewsAdapter = new UserReviewsAdapter(null);
-        mReviewsRecyclerView.setAdapter(mUserReviewsAdapter);
-        mReviewsRecyclerView.setHasFixedSize(true);
-    }
-
-    private void setupTrailerViews() {
-        mOnTrailersErrorResponseTextView = (TextView) findViewById(R.id.tv_error_msg_trailers);
-        mMovieTrailersProgressBar = (ProgressBar) findViewById(R.id.pb_trailers);
-        mMovieTrailersRecyclerView = (RecyclerView) findViewById(R.id.rv_trailer);
+    private void initExtrasViews() {
+        mErrorTextView = (TextView) findViewById(R.id.error_message_text);
+        mLoadingIndicator = (ProgressBar) findViewById(R.id.loading_indicator);
+        mRecyclerView = (RecyclerView) findViewById(R.id.result_recycler_view);
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this,
                 RecyclerView.VERTICAL, false);
-        mMovieTrailersRecyclerView.setLayoutManager(layoutManager);
-        mMovieTrailersAdapter = new MovieTrailersAdapter(null, this);
-        mMovieTrailersRecyclerView.setAdapter(mMovieTrailersAdapter);
-        mMovieTrailersRecyclerView.setHasFixedSize(true);
+        mRecyclerView.setLayoutManager(layoutManager);
+        mExtrasAdapter = new ExtrasAdapter(null, this);
+        mRecyclerView.setAdapter(mExtrasAdapter);
+        mRecyclerView.setHasFixedSize(false);
+        mRecyclerView.setClipToPadding(false);
     }
 
     private void setupDetailViews() {
@@ -275,9 +284,8 @@ public class DetailActivity extends AppCompatActivity
             super.onPreExecute();
             if (!isConnected()) {
                 Context context = DetailActivity.this;
-                mOnTrailersErrorResponseTextView.setText(context.getString(R.string.error_network));
-                showErrorMessage(mMovieTrailersRecyclerView, mOnTrailersErrorResponseTextView,
-                        mMovieTrailersProgressBar);
+                mErrorTextView.setText(context.getString(R.string.error_network));
+                publishError();
             }
         }
 
@@ -301,14 +309,15 @@ public class DetailActivity extends AppCompatActivity
         protected void onPostExecute(List<MovieTrailer> trailers) {
             super.onPostExecute(trailers);
 
-            if (trailers == null) {
-                showErrorMessage(mMovieTrailersRecyclerView, mOnTrailersErrorResponseTextView,
-                        mMovieTrailersProgressBar);
-            } else {
-                mMovieTrailersAdapter.addAll(trailers);
-                displayResults(mMovieTrailersRecyclerView, mOnTrailersErrorResponseTextView,
-                        mMovieTrailersProgressBar);
-            }
+            extraDetails.add(getString(R.string.label_trailers));
+
+            if (trailers != null && trailers.size() > 0)
+                extraDetails.addAll(trailers);
+            else
+                extraDetails.add(new Error(getString(R.string.error_msg_trailer)));
+
+            mExtrasAdapter.addAll(extraDetails);
+            publishResult();
         }
     }
 
@@ -333,9 +342,8 @@ public class DetailActivity extends AppCompatActivity
             super.onPreExecute();
             if (!isConnected()) {
                 Context context = DetailActivity.this;
-                mOnReviewsErrorResponseTextView.setText(context.getString(R.string.error_network));
-                showErrorMessage(mReviewsRecyclerView, mOnReviewsErrorResponseTextView,
-                        mReviewsProgressBar);
+                mErrorTextView.setText(context.getString(R.string.error_network));
+                publishError();
             }
         }
 
@@ -358,14 +366,13 @@ public class DetailActivity extends AppCompatActivity
         protected void onPostExecute(List<UserReview> reviews) {
             super.onPostExecute(reviews);
 
-            if (reviews == null) {
-                showErrorMessage(mReviewsRecyclerView, mOnReviewsErrorResponseTextView,
-                        mReviewsProgressBar);
-            } else {
-                mUserReviewsAdapter.addAll(reviews);
-                displayResults(mReviewsRecyclerView, mOnReviewsErrorResponseTextView,
-                        mReviewsProgressBar);
-            }
+            extraDetails.add(getString(R.string.label_reviews));
+
+            if (reviews != null && reviews.size() > 0) extraDetails.addAll(reviews);
+            else extraDetails.add(new Error(getString(R.string.error_msg_reviews)));
+
+            mExtrasAdapter.addAll(extraDetails);
+            publishResult();
         }
     }
 
@@ -376,17 +383,15 @@ public class DetailActivity extends AppCompatActivity
         return networkInfo != null && networkInfo.isConnectedOrConnecting();
     }
 
-    private void displayResults(RecyclerView rv, TextView tv, ProgressBar pb) {
-        rv.setVisibility(View.VISIBLE);
-        tv.setVisibility(View.INVISIBLE);
-        pb.setVisibility(View.INVISIBLE);
+    private void publishResult() {
+        mRecyclerView.setVisibility(View.VISIBLE);
+        mErrorTextView.setVisibility(View.INVISIBLE);
+        mLoadingIndicator.setVisibility(View.INVISIBLE);
     }
 
-    private void showErrorMessage(RecyclerView rv, TextView tv, ProgressBar pb) {
-        rv.setVisibility(View.INVISIBLE);
-        tv.setVisibility(View.VISIBLE);
-        pb.setVisibility(View.INVISIBLE);
+    private void publishError() {
+        mRecyclerView.setVisibility(View.INVISIBLE);
+        mErrorTextView.setVisibility(View.VISIBLE);
+        mLoadingIndicator.setVisibility(View.INVISIBLE);
     }
-
-
 }

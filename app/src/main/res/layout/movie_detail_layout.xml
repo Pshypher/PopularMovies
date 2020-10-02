@@ -89,6 +89,7 @@
         android:layout_marginLeft="16dp"
         android:layout_marginTop="24dp"
         android:layout_marginRight="16dp"
+        android:ellipsize="end"
         android:textSize="18sp"
         tools:text="@string/placeholder_overview_text" />
 

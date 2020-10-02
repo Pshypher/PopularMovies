@@ -142,7 +142,7 @@ public class MoviesProvider extends ContentProvider {
         int match = sUriMatcher.match(uri);
         switch (match) {
             case MOVIES_ITEM:
-                selection = MoviesEntry.COLUMN_MOVIE_ID + " =? ";
+                selection = MoviesEntry.COLUMN_MOVIE_ID + "=?";
                 String id = uri.getLastPathSegment();
                 selectionArgs = new String[] {id};
                 rowsDeleted = db.delete(
@@ -172,7 +172,7 @@ public class MoviesProvider extends ContentProvider {
         int match = sUriMatcher.match(uri);
         switch (match) {
             case MOVIES_ITEM:
-                selection = MoviesEntry.COLUMN_MOVIE_ID;
+                selection = MoviesEntry.COLUMN_MOVIE_ID + "=?";
                 String id = uri.getLastPathSegment();
                 selectionArgs = new String[] {id};
                 rowsAffected = db.update(
